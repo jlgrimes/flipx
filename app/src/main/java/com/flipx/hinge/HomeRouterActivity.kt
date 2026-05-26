@@ -40,20 +40,23 @@ class HomeRouterActivity : Activity() {
     }
 
     private fun launchTarget(pkg: String): Boolean {
-        // Prefer HOME-category intent (engages the launcher's home behavior, not just app launch)
+        // Prefer the regular LAUNCHER intent. Using a HOME-category intent puts the target
+        // in the home task stack, which on Android 12 (at least this Unisoc build) applies
+        // an aspect-ratio compat constraint and pillarboxes the activity. The LAUNCHER
+        // intent starts the target in a normal task with no compat constraint.
+        val launchIntent = packageManager.getLaunchIntentForPackage(pkg)
+            ?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION)
+        if (launchIntent != null) {
+            return runCatching { startActivity(launchIntent) }.isSuccess
+        }
+        // Fallback: HOME-category intent, for launchers that only declare a HOME activity
+        // and no plain LAUNCHER activity.
         val homeIntent = Intent(Intent.ACTION_MAIN)
             .addCategory(Intent.CATEGORY_HOME)
             .setPackage(pkg)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION)
         if (homeIntent.resolveActivity(packageManager) != null) {
             return runCatching { startActivity(homeIntent) }.isSuccess
-        }
-        // Fallback: regular launcher intent (covers apps like ES-DE if their HOME activity is
-        // currently disabled, or apps that aren't HOME-declared at all)
-        val launchIntent = packageManager.getLaunchIntentForPackage(pkg)
-            ?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION)
-        if (launchIntent != null) {
-            return runCatching { startActivity(launchIntent) }.isSuccess
         }
         return false
     }
