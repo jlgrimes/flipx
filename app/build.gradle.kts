@@ -23,6 +23,10 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = false
+            // Sign release with the debug keystore so this APK can upgrade the existing
+            // debug-signed install in-place (no uninstall, settings preserved).
+            // For Play Store distribution you'd swap this for a dedicated release keystore.
+            signingConfig = signingConfigs.getByName("debug")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
