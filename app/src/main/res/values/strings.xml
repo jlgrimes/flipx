@@ -1,20 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">flipx</string>
-    <string name="subtitle">Hinge → broadcast bridge for MacroDroid</string>
+    <string name="subtitle">Hinge → routes the home button</string>
 
     <string name="prereq_header">Prerequisite</string>
     <string name="status_header">Status</string>
+    <string name="launcher_header">Routing</string>
+    <string name="home_role_header">Default home</string>
 
     <string name="prereq_body">flipx requires Shizuku to run. Shizuku is a free third-party service that grants flipx the shell-level access it needs to read the hinge\'s input device. It does not require root.</string>
     <string name="prereq_body_start">Shizuku is installed but not currently running. Open Shizuku and start it (the app explains the one-time ADB pairing flow).</string>
     <string name="prereq_body_grant">Shizuku is running. Grant flipx permission to use it.</string>
     <string name="prereq_body_bind">Ready. Tap to start the hinge watcher.</string>
-    <string name="prereq_body_ready">Watcher is active. Flip the hinge to verify — \"Last event\" below should update.</string>
+    <string name="prereq_body_ready">Watcher is active. Pick your launchers below, then tap \"Make flipx the home\".</string>
 
     <string name="btn_install_shizuku">Install Shizuku</string>
     <string name="btn_open_shizuku">Open Shizuku</string>
     <string name="btn_grant">Grant permission</string>
     <string name="btn_bind">Start watcher</string>
     <string name="btn_stop">Stop watcher</string>
+    <string name="btn_make_home">Make flipx the home</string>
+
+    <string name="launcher_open_label">On hinge OPEN, route home to:</string>
+    <string name="launcher_close_label">On hinge CLOSE, route home to:</string>
+    <string name="launcher_picker_title">Choose launcher</string>
+    <string name="launcher_none">(none — open flipx UI)</string>
+    <string name="home_role_note">Tip: if ES-DE has a \"launcher mode\" QS tile, turn it OFF — flipx should be the only app holding the HOME role.</string>
 </resources>

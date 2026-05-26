@@ -9,6 +9,7 @@ import android.os.Handler
 import android.os.Looper
 import android.view.View
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.flipx.hinge.databinding.ActivityMainBinding
 
@@ -32,6 +33,9 @@ class MainActivity : AppCompatActivity(), ShizukuBridge.Listener {
         ShizukuBridge.init(applicationContext)
 
         binding.btnStop.setOnClickListener { ShizukuBridge.unbind() }
+        binding.txtLauncherOpen.setOnClickListener { pickLauncher(true) }
+        binding.txtLauncherClose.setOnClickListener { pickLauncher(false) }
+        binding.btnMakeHome.setOnClickListener { makeFlipxHome() }
     }
 
     override fun onResume() {
@@ -70,16 +74,28 @@ class MainActivity : AppCompatActivity(), ShizukuBridge.Listener {
         val s = stage()
         val svc = ShizukuBridge.service
         val last = runCatching { svc?.lastEvent() ?: "—" }.getOrDefault("—")
+        val homeHolder = runCatching { svc?.currentHomeHolder() ?: "" }.getOrDefault("")
+        val flipxIsHome = homeHolder == packageName
+        val hingeOpen = Prefs.isHingeOpen(this)
 
-        // Status block
         binding.txtShizukuInstalled.text = "Shizuku installed: ${yesNo(isShizukuInstalled())}"
         binding.txtShizuku.text          = "Shizuku running:   ${yesNo(ShizukuBridge.isShizukuAlive())}"
         binding.txtPerm.text             = "Permission:        ${yesNo(ShizukuBridge.hasPermission())}"
         binding.txtBound.text            = "UserService bound: ${yesNo(svc != null)}"
         binding.txtWatch.text            = "Watcher active:    ${yesNo(s == Stage.Ready)}"
+        binding.txtHingeState.text       = "Hinge state:       ${if (hingeOpen) "open" else "closed"}"
         binding.txtLast.text             = "Last event: $last"
 
-        // Stage-driven primary action + body
+        binding.txtLauncherOpen.text = Launchers.labelFor(this, Prefs.openLauncher(this))
+        binding.txtLauncherClose.text = Launchers.labelFor(this, Prefs.closeLauncher(this))
+
+        binding.txtHomeHolder.text = when {
+            homeHolder.isEmpty() -> "Current home: (unknown — bind Shizuku to check)"
+            flipxIsHome -> "Current home: flipx ✓"
+            else -> "Current home: $homeHolder"
+        }
+        binding.btnMakeHome.isEnabled = svc != null && !flipxIsHome
+
         when (s) {
             Stage.NotInstalled -> {
                 binding.txtPrereq.setText(R.string.prereq_body)
@@ -119,6 +135,40 @@ class MainActivity : AppCompatActivity(), ShizukuBridge.Listener {
             }
         }
         if (s != Stage.Ready) binding.btnPrimary.visibility = View.VISIBLE
+    }
+
+    private fun pickLauncher(forOpen: Boolean) {
+        val installed = Launchers.listHomeApps(this).filter { it.pkg != packageName }
+        val labels = mutableListOf(getString(R.string.launcher_none))
+        labels.addAll(installed.map { it.label })
+        AlertDialog.Builder(this)
+            .setTitle(R.string.launcher_picker_title)
+            .setItems(labels.toTypedArray()) { _, which ->
+                val pkg = if (which == 0) "" else installed[which - 1].pkg
+                if (forOpen) Prefs.setOpenLauncher(this, pkg)
+                else Prefs.setCloseLauncher(this, pkg)
+                render()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun makeFlipxHome() {
+        val svc = ShizukuBridge.service ?: run {
+            Toast.makeText(this, "Bind Shizuku first", Toast.LENGTH_SHORT).show()
+            return
+        }
+        Thread {
+            val ok = runCatching { svc.setHomeHolder(packageName) }.getOrDefault(false)
+            runOnUiThread {
+                Toast.makeText(
+                    this,
+                    if (ok) "flipx is now the default home" else "Failed to set home — check logcat",
+                    Toast.LENGTH_SHORT
+                ).show()
+                render()
+            }
+        }.start()
     }
 
     private fun yesNo(v: Boolean) = if (v) "yes" else "no"

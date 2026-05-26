@@ -5,6 +5,10 @@
 
     <queries>
         <package android:name="moe.shizuku.privileged.api" />
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.HOME" />
+        </intent>
     </queries>
 
     <application
@@ -23,6 +27,23 @@
             </intent-filter>
         </activity>
 
+        <!-- The HOME proxy. Transparent, no history, no recents. Routes each home press
+             to the configured target launcher based on current hinge state. -->
+        <activity
+            android:name=".HomeRouterActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Flipx.Transparent"
+            android:launchMode="singleInstance"
+            android:noHistory="true"
+            android:excludeFromRecents="true"
+            android:stateNotNeeded="true">
+            <intent-filter android:priority="100">
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
         <receiver
             android:name=".BootReceiver"
             android:exported="true">
@@ -32,7 +53,14 @@
             </intent-filter>
         </receiver>
 
-        <!-- Shizuku provider — required so Shizuku can bind to us -->
+        <!-- Cross-process hinge state. UserService (shell uid) calls
+             `am startservice -n com.flipx.hinge/.StateUpdateService -a flipx.HINGE_(OPEN|CLOSE)`
+             which routes here, into flipx's main process, where we can update SharedPreferences. -->
+        <service
+            android:name=".StateUpdateService"
+            android:exported="true" />
+
+        <!-- Shizuku provider -->
         <provider
             android:name="rikka.shizuku.ShizukuProvider"
             android:authorities="${applicationId}.shizuku"

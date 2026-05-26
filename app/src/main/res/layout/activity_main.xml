@@ -68,6 +68,85 @@
                 android:visibility="gone" />
         </LinearLayout>
 
+        <!-- Routing -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/launcher_header"
+            android:textSize="12sp"
+            android:textAllCaps="true"
+            android:textStyle="bold"
+            android:alpha="0.6"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/launcher_open_label"
+            android:textSize="14sp"
+            android:layout_marginBottom="2dp" />
+        <TextView
+            android:id="@+id/txtLauncherOpen"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="12dp"
+            android:textSize="15sp"
+            android:background="?android:attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:layout_marginBottom="12dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/launcher_close_label"
+            android:textSize="14sp"
+            android:layout_marginBottom="2dp" />
+        <TextView
+            android:id="@+id/txtLauncherClose"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="12dp"
+            android:textSize="15sp"
+            android:background="?android:attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:layout_marginBottom="24dp" />
+
+        <!-- Default home -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/home_role_header"
+            android:textSize="12sp"
+            android:textAllCaps="true"
+            android:textStyle="bold"
+            android:alpha="0.6"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/txtHomeHolder"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:fontFamily="monospace"
+            android:layout_marginBottom="8dp" />
+
+        <Button
+            android:id="@+id/btnMakeHome"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/btn_make_home"
+            android:layout_marginBottom="4dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/home_role_note"
+            android:textSize="12sp"
+            android:alpha="0.7"
+            android:layout_marginBottom="24dp" />
+
         <!-- Status -->
         <TextView
             android:layout_width="match_parent"
@@ -109,6 +188,13 @@
             android:layout_marginBottom="2dp" />
         <TextView
             android:id="@+id/txtWatch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:fontFamily="monospace"
+            android:layout_marginBottom="2dp" />
+        <TextView
+            android:id="@+id/txtHingeState"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textSize="14sp"

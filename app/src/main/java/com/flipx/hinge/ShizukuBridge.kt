@@ -11,7 +11,9 @@ object ShizukuBridge {
 
     private const val TAG = "FlipxHinge"
     private const val PERM_REQ_CODE = 1001
-    private const val SERVICE_VERSION = 1
+    // Bump on every UserService code change — Shizuku restarts the daemon when the
+    // version increments (otherwise it keeps the old loaded class running).
+    private const val SERVICE_VERSION = 5
 
     @Volatile var service: IUserService? = null
         private set
@@ -32,9 +34,10 @@ object ShizukuBridge {
     private val connection = object : android.content.ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
             if (binder != null && binder.pingBinder()) {
-                service = IUserService.Stub.asInterface(binder)
+                val svc = IUserService.Stub.asInterface(binder)
+                service = svc
                 Log.i(TAG, "UserService connected")
-                runCatching { service?.startWatch() }
+                runCatching { svc.startWatch() }
                     .onFailure { Log.w(TAG, "startWatch err: ${it.message}") }
                 listener?.onConnected()
             } else {
