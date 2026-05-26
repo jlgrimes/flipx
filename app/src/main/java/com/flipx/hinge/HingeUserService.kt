@@ -76,6 +76,41 @@ class HingeUserService : IUserService.Stub {
         Log.i(TAG, "launchers configured: open='$openLauncherPkg' close='$closeLauncherPkg'")
     }
 
+    override fun setIgnoreOrientationRequest(ignore: Boolean): Boolean {
+        return try {
+            val proc = ProcessBuilder(
+                "/system/bin/wm", "set-ignore-orientation-request", ignore.toString()
+            ).redirectErrorStream(true).start()
+            proc.waitFor()
+            val ok = proc.exitValue() == 0
+            if (!ok) {
+                val out = proc.inputStream.bufferedReader().readText().trim()
+                Log.w(TAG, "wm set-ignore-orientation-request exit=${proc.exitValue()} out=$out")
+            } else {
+                Log.i(TAG, "ignore-orientation-request := $ignore")
+            }
+            ok
+        } catch (e: Exception) {
+            Log.w(TAG, "setIgnoreOrientationRequest failed: ${e.message}")
+            false
+        }
+    }
+
+    override fun isIgnoringOrientationRequest(): Boolean {
+        return try {
+            val proc = ProcessBuilder(
+                "/system/bin/wm", "get-ignore-orientation-request"
+            ).redirectErrorStream(true).start()
+            val out = proc.inputStream.bufferedReader().readText().trim()
+            proc.waitFor()
+            // Output looks like: "ignoreOrientationRequest true for displayId=0"
+            out.contains("true", ignoreCase = true)
+        } catch (e: Exception) {
+            Log.w(TAG, "isIgnoringOrientationRequest failed: ${e.message}")
+            false
+        }
+    }
+
     private fun runWatcher() {
         while (watcherThread != null) {
             try {

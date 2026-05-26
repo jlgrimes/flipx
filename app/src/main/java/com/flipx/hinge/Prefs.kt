@@ -7,6 +7,7 @@ object Prefs {
     private const val KEY_OPEN = "open_launcher_pkg"
     private const val KEY_CLOSE = "close_launcher_pkg"
     private const val KEY_HINGE_OPEN = "hinge_is_open"
+    private const val KEY_FORCE_ROTATION = "force_rotation"
 
     private fun prefs(ctx: Context) =
         ctx.applicationContext.getSharedPreferences(NAME, Context.MODE_PRIVATE)
@@ -31,5 +32,14 @@ object Prefs {
 
     fun setHingeOpen(ctx: Context, open: Boolean) {
         prefs(ctx).edit().putBoolean(KEY_HINGE_OPEN, open).apply()
+    }
+
+    /** Whether flipx should force the system to ignore per-app orientation locks
+     *  (so locked-portrait launchers rotate with the sensor). Default true on fresh install. */
+    fun forceRotation(ctx: Context): Boolean =
+        prefs(ctx).getBoolean(KEY_FORCE_ROTATION, true)
+
+    fun setForceRotation(ctx: Context, enabled: Boolean) {
+        prefs(ctx).edit().putBoolean(KEY_FORCE_ROTATION, enabled).apply()
     }
 }

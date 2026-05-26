@@ -55,7 +55,13 @@ Open flipx. You'll see a status panel with several sequential gates — work thr
 
 That's it. Press home or flip the hinge — flipx routes you to the right launcher based on hinge state.
 
-### 5. (Important) Turn off other "launcher mode" toggles
+### 5. (Optional) Force auto-rotate everywhere
+
+Many launchers (and some apps) lock themselves to portrait via `android:screenOrientation` in their manifest, which overrides the system auto-rotate setting. flipx exposes a toggle that flips the WindowManager-level `ignore-orientation-request` flag — when on, every app rotates with the sensor regardless of its own orientation lock. Defaults to ON in v0.2+.
+
+Toggle it in the **Rotation** section of flipx's main screen. Turn it off if a game you play needs to stay in a fixed orientation.
+
+### 6. (Important) Turn off other "launcher mode" toggles
 
 If ES-DE has its **launcher mode** Quick Settings tile enabled, **turn it off**. flipx needs to be the *only* app holding the HOME role; otherwise ES-DE will re-grab it and you'll lose the routing. Same for any other app that tries to be the home.
 

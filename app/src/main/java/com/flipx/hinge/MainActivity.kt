@@ -36,6 +36,24 @@ class MainActivity : AppCompatActivity(), ShizukuBridge.Listener {
         binding.txtLauncherOpen.setOnClickListener { pickLauncher(true) }
         binding.txtLauncherClose.setOnClickListener { pickLauncher(false) }
         binding.btnMakeHome.setOnClickListener { makeFlipxHome() }
+
+        binding.swForceRotation.isChecked = Prefs.forceRotation(this)
+        binding.swForceRotation.setOnCheckedChangeListener { _, isChecked ->
+            Prefs.setForceRotation(this, isChecked)
+            applyForceRotation(isChecked)
+        }
+    }
+
+    private fun applyForceRotation(enabled: Boolean) {
+        val svc = ShizukuBridge.service ?: return
+        Thread {
+            runCatching { svc.setIgnoreOrientationRequest(enabled) }
+                .onFailure { e ->
+                    runOnUiThread {
+                        Toast.makeText(this, "rotation toggle failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                    }
+                }
+        }.start()
     }
 
     override fun onResume() {
