@@ -11,12 +11,9 @@ interface IUserService {
     void setLaunchers(String openPkg, String closePkg) = 7;
 
     /**
-     * Make WindowManager ignore per-app orientation requests, so launchers (and any other
-     * app) that lock themselves to a fixed orientation rotate with the sensor instead.
-     * Runs `wm set-ignore-orientation-request <true|false>` as shell uid.
+     * Lock the display rotation to the hinge state on the Anbernic RG Rotate:
+     * hinge open → portrait (rotation 0), hinge closed → landscape (rotation 1).
+     * Disabling calls `wm user-rotation free`, restoring sensor-based rotation.
      */
-    boolean setIgnoreOrientationRequest(boolean ignore) = 8;
-
-    /** Returns the current value of the WindowManager ignore-orientation-request flag. */
-    boolean isIgnoringOrientationRequest() = 9;
+    void setOrientationLock(boolean enabled) = 8;
 }

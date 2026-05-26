@@ -14,7 +14,7 @@ object ShizukuBridge {
 
     // Bump on every UserService code change — Shizuku restarts the daemon when the
     // version increments (otherwise it keeps the old loaded class running).
-    private const val SERVICE_VERSION = 9
+    private const val SERVICE_VERSION = 10
 
     @Volatile var service: IUserService? = null
         private set
@@ -48,10 +48,10 @@ object ShizukuBridge {
                     runCatching {
                         svc.setLaunchers(Prefs.openLauncher(ctx), Prefs.closeLauncher(ctx))
                     }.onFailure { Log.w(TAG, "setLaunchers err: ${it.message}") }
-                    // Reapply the force-rotation preference — wm flag resets across reboots
+                    // Reapply the orientation-lock preference — wm flag resets across reboots
                     runCatching {
-                        svc.setIgnoreOrientationRequest(Prefs.forceRotation(ctx))
-                    }.onFailure { Log.w(TAG, "setIgnoreOrientationRequest err: ${it.message}") }
+                        svc.setOrientationLock(Prefs.orientationLock(ctx))
+                    }.onFailure { Log.w(TAG, "setOrientationLock err: ${it.message}") }
                 }
                 listener?.onConnected()
             } else {

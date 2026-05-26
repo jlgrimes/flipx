@@ -7,7 +7,7 @@ object Prefs {
     private const val KEY_OPEN = "open_launcher_pkg"
     private const val KEY_CLOSE = "close_launcher_pkg"
     private const val KEY_HINGE_OPEN = "hinge_is_open"
-    private const val KEY_FORCE_ROTATION = "force_rotation"
+    private const val KEY_ORIENTATION_LOCK = "orientation_lock"
 
     private fun prefs(ctx: Context) =
         ctx.applicationContext.getSharedPreferences(NAME, Context.MODE_PRIVATE)
@@ -26,7 +26,6 @@ object Prefs {
         prefs(ctx).edit().putString(KEY_CLOSE, pkg).apply()
     }
 
-    /** Hinge state. Default true (open) until the UserService writes a transition. */
     fun isHingeOpen(ctx: Context): Boolean =
         prefs(ctx).getBoolean(KEY_HINGE_OPEN, true)
 
@@ -34,12 +33,12 @@ object Prefs {
         prefs(ctx).edit().putBoolean(KEY_HINGE_OPEN, open).apply()
     }
 
-    /** Whether flipx should force the system to ignore per-app orientation locks
-     *  (so locked-portrait launchers rotate with the sensor). Default true on fresh install. */
-    fun forceRotation(ctx: Context): Boolean =
-        prefs(ctx).getBoolean(KEY_FORCE_ROTATION, true)
+    /** Whether flipx should lock the display rotation based on hinge state:
+     *  open → portrait, closed → landscape. Default false. */
+    fun orientationLock(ctx: Context): Boolean =
+        prefs(ctx).getBoolean(KEY_ORIENTATION_LOCK, false)
 
-    fun setForceRotation(ctx: Context, enabled: Boolean) {
-        prefs(ctx).edit().putBoolean(KEY_FORCE_ROTATION, enabled).apply()
+    fun setOrientationLock(ctx: Context, enabled: Boolean) {
+        prefs(ctx).edit().putBoolean(KEY_ORIENTATION_LOCK, enabled).apply()
     }
 }

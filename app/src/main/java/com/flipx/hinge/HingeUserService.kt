@@ -15,6 +15,9 @@ class HingeUserService : IUserService.Stub {
     @Volatile private var openLauncherPkg: String = ""
     @Volatile private var closeLauncherPkg: String = ""
 
+    @Volatile private var orientationLockEnabled: Boolean = false
+    @Volatile private var currentlyOpen: Boolean = true  // best-effort cache of last seen state
+
     override fun destroy() {
         stopWatch()
     }
@@ -76,38 +79,36 @@ class HingeUserService : IUserService.Stub {
         Log.i(TAG, "launchers configured: open='$openLauncherPkg' close='$closeLauncherPkg'")
     }
 
-    override fun setIgnoreOrientationRequest(ignore: Boolean): Boolean {
-        return try {
-            val proc = ProcessBuilder(
-                "/system/bin/wm", "set-ignore-orientation-request", ignore.toString()
-            ).redirectErrorStream(true).start()
-            proc.waitFor()
-            val ok = proc.exitValue() == 0
-            if (!ok) {
-                val out = proc.inputStream.bufferedReader().readText().trim()
-                Log.w(TAG, "wm set-ignore-orientation-request exit=${proc.exitValue()} out=$out")
-            } else {
-                Log.i(TAG, "ignore-orientation-request := $ignore")
-            }
-            ok
-        } catch (e: Exception) {
-            Log.w(TAG, "setIgnoreOrientationRequest failed: ${e.message}")
-            false
+    override fun setOrientationLock(enabled: Boolean) {
+        orientationLockEnabled = enabled
+        Log.i(TAG, "orientation lock := $enabled")
+        if (enabled) {
+            // Apply immediately based on the last known hinge state
+            applyRotation(currentlyOpen)
+        } else {
+            // Restore sensor-based rotation
+            runWm("user-rotation", "free")
         }
     }
 
-    override fun isIgnoringOrientationRequest(): Boolean {
-        return try {
-            val proc = ProcessBuilder(
-                "/system/bin/wm", "get-ignore-orientation-request"
-            ).redirectErrorStream(true).start()
-            val out = proc.inputStream.bufferedReader().readText().trim()
+    private fun applyRotation(isOpen: Boolean) {
+        val rotation = if (isOpen) ROTATION_PORTRAIT else ROTATION_LANDSCAPE
+        runWm("user-rotation", "lock", rotation.toString())
+    }
+
+    private fun runWm(vararg args: String) {
+        try {
+            val proc = ProcessBuilder("/system/bin/wm", *args)
+                .redirectErrorStream(true).start()
             proc.waitFor()
-            // Output looks like: "ignoreOrientationRequest true for displayId=0"
-            out.contains("true", ignoreCase = true)
+            if (proc.exitValue() != 0) {
+                val out = proc.inputStream.bufferedReader().readText().trim()
+                Log.w(TAG, "wm ${args.joinToString(" ")} exit=${proc.exitValue()} out=$out")
+            } else {
+                Log.i(TAG, "wm ${args.joinToString(" ")} ok")
+            }
         } catch (e: Exception) {
-            Log.w(TAG, "isIgnoringOrientationRequest failed: ${e.message}")
-            false
+            Log.w(TAG, "wm failed: ${e.message}")
         }
     }
 
@@ -152,9 +153,11 @@ class HingeUserService : IUserService.Stub {
         if (action == null) return
 
         val isOpen = action == ACTION_OPEN
+        currentlyOpen = isOpen
         lastEvent = "${System.currentTimeMillis()} $action (code=0x${code.toString(16)} v=$value)"
 
         writeState(isOpen)
+        if (orientationLockEnabled) applyRotation(isOpen)
         broadcast(action)
         maybeAutoSwitch()
         Log.i(TAG, "fired $action; state := ${if (isOpen) "open" else "closed"}")
@@ -182,13 +185,10 @@ class HingeUserService : IUserService.Stub {
     }
 
     private fun currentForegroundPackage(): String? = try {
-        // Run dumpsys directly (no shell pipe — the shell context inside the Shizuku
-        // UserService doesn't always honor pipes reliably). Grep with Kotlin regex instead.
         val proc = ProcessBuilder("/system/bin/dumpsys", "window")
             .redirectErrorStream(true).start()
         val out = proc.inputStream.bufferedReader().readText()
         proc.waitFor()
-        // Sample: mCurrentFocus=Window{e9c40e4 u0 com.launcher.hype/com.launcher.hype.MainActivity}
         val match = Regex("""(?:mCurrentFocus|mFocusedApp)=\S+\{[^}]*\bu\d+\s+(\S+?)/""")
             .find(out)
         if (match == null) Log.w(TAG, "foreground regex didn't match; dumpsys output begins: ${out.take(200)}")
@@ -230,7 +230,6 @@ class HingeUserService : IUserService.Stub {
     }
 
     private fun broadcast(action: String) {
-        // Implicit broadcast for external listeners (MacroDroid, etc.)
         try {
             ProcessBuilder("/system/bin/am", "broadcast", "-a", action)
                 .redirectErrorStream(true).start()
@@ -247,6 +246,11 @@ class HingeUserService : IUserService.Stub {
         private const val EV_KEY = 0x01
         private const val KEY_F12 = 0x58
         private const val KEY_F9  = 0x43
+
+        // Hard-coded for the Anbernic RG Rotate. If portrait/landscape come out backwards
+        // on your device, swap these two values.
+        private const val ROTATION_PORTRAIT = 0
+        private const val ROTATION_LANDSCAPE = 1
 
         const val ACTION_OPEN = "flipx.HINGE_OPEN"
         const val ACTION_CLOSE = "flipx.HINGE_CLOSE"

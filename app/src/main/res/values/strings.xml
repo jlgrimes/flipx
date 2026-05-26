@@ -28,6 +28,6 @@
     <string name="home_role_note">Tip: if ES-DE has a \"launcher mode\" QS tile, turn it OFF — flipx should be the only app holding the HOME role.</string>
 
     <string name="rotation_header">Rotation</string>
-    <string name="rotation_label">Force auto-rotate everywhere</string>
-    <string name="rotation_note">Many launchers lock themselves to portrait. Toggling this on tells the system to ignore those per-app locks so the screen rotates with the device sensor. Affects all apps, not just home screens — turn off if a game you play rotates incorrectly.</string>
+    <string name="rotation_label">Lock orientation to hinge state</string>
+    <string name="rotation_note">When on, flipx forces the display rotation to match the hinge: open → portrait, closed → landscape. Disables sensor-based auto-rotate while enabled. Hard-coded for the RG Rotate\'s physical orientations.</string>
 </resources>

@@ -55,11 +55,11 @@ Open flipx. You'll see a status panel with several sequential gates — work thr
 
 That's it. Press home or flip the hinge — flipx routes you to the right launcher based on hinge state.
 
-### 5. (Optional) Force auto-rotate everywhere
+### 5. (Optional) Lock orientation to hinge state
 
-Many launchers (and some apps) lock themselves to portrait via `android:screenOrientation` in their manifest, which overrides the system auto-rotate setting. flipx exposes a toggle that flips the WindowManager-level `ignore-orientation-request` flag — when on, every app rotates with the sensor regardless of its own orientation lock. Defaults to ON in v0.2+.
+The RG Rotate's physical configuration is different in each hinge position. flipx exposes a toggle that hard-binds display rotation to the hinge: **open → portrait, closed → landscape**. When enabled, auto-rotate is effectively disabled and the screen always sits in whichever orientation the hinge says it should.
 
-Toggle it in the **Rotation** section of flipx's main screen. Turn it off if a game you play needs to stay in a fixed orientation.
+Toggle it in the **Rotation** section of flipx's main screen. Default off — turn on if you want this behavior.
 
 ### 6. (Important) Turn off other "launcher mode" toggles
 
