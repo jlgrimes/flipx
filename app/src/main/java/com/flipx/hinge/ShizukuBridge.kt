@@ -11,12 +11,15 @@ object ShizukuBridge {
 
     private const val TAG = "FlipxHinge"
     private const val PERM_REQ_CODE = 1001
+
     // Bump on every UserService code change — Shizuku restarts the daemon when the
     // version increments (otherwise it keeps the old loaded class running).
-    private const val SERVICE_VERSION = 5
+    private const val SERVICE_VERSION = 8
 
     @Volatile var service: IUserService? = null
         private set
+
+    @Volatile private var appCtx: Context? = null
 
     private val args by lazy {
         Shizuku.UserServiceArgs(
@@ -39,6 +42,13 @@ object ShizukuBridge {
                 Log.i(TAG, "UserService connected")
                 runCatching { svc.startWatch() }
                     .onFailure { Log.w(TAG, "startWatch err: ${it.message}") }
+                // Sync the user's launcher picks into the daemon's in-memory fields
+                // so it can detect "are we on a configured launcher right now."
+                appCtx?.let { ctx ->
+                    runCatching {
+                        svc.setLaunchers(Prefs.openLauncher(ctx), Prefs.closeLauncher(ctx))
+                    }.onFailure { Log.w(TAG, "setLaunchers err: ${it.message}") }
+                }
                 listener?.onConnected()
             } else {
                 Log.w(TAG, "UserService binder invalid")
@@ -68,7 +78,8 @@ object ShizukuBridge {
         }
     }
 
-    fun init(@Suppress("UNUSED_PARAMETER") context: Context) {
+    fun init(context: Context) {
+        appCtx = context.applicationContext
         Shizuku.addRequestPermissionResultListener(permListener)
         Shizuku.addBinderReceivedListenerSticky { tryBindOrRequest() }
         Shizuku.addBinderDeadListener {
@@ -91,6 +102,14 @@ object ShizukuBridge {
     }
 
     fun isShizukuAlive(): Boolean = Shizuku.pingBinder()
+
+    /** Push launcher picks to the running daemon, e.g. after the user changes them. */
+    fun pushLaunchers(ctx: Context) {
+        val svc = service ?: return
+        runCatching {
+            svc.setLaunchers(Prefs.openLauncher(ctx), Prefs.closeLauncher(ctx))
+        }.onFailure { Log.w(TAG, "pushLaunchers err: ${it.message}") }
+    }
 
     private fun bind() {
         try {

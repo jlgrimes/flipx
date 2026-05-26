@@ -12,6 +12,8 @@ class HingeUserService : IUserService.Stub {
     @Volatile private var watcherThread: Thread? = null
     @Volatile private var watcherProcess: Process? = null
     @Volatile private var lastEvent: String = "none"
+    @Volatile private var openLauncherPkg: String = ""
+    @Volatile private var closeLauncherPkg: String = ""
 
     override fun destroy() {
         stopWatch()
@@ -68,6 +70,12 @@ class HingeUserService : IUserService.Stub {
         }
     }
 
+    override fun setLaunchers(openPkg: String?, closePkg: String?) {
+        openLauncherPkg = openPkg.orEmpty()
+        closeLauncherPkg = closePkg.orEmpty()
+        Log.i(TAG, "launchers configured: open='$openLauncherPkg' close='$closeLauncherPkg'")
+    }
+
     private fun runWatcher() {
         while (watcherThread != null) {
             try {
@@ -113,21 +121,73 @@ class HingeUserService : IUserService.Stub {
 
         writeState(isOpen)
         broadcast(action)
+        maybeAutoSwitch()
         Log.i(TAG, "fired $action; state := ${if (isOpen) "open" else "closed"}")
+    }
+
+    /** If the user is currently looking at one of the configured launchers, fire a HOME
+     *  intent so flipx's HomeRouterActivity re-routes to the launcher for the new state. */
+    private fun maybeAutoSwitch() {
+        val openPkg = openLauncherPkg
+        val closePkg = closeLauncherPkg
+        if (openPkg.isEmpty() && closePkg.isEmpty()) {
+            Log.i(TAG, "autoSwitch skipped: no launchers configured")
+            return
+        }
+        val foreground = currentForegroundPackage()
+        if (foreground == null) {
+            Log.w(TAG, "autoSwitch skipped: couldn't read foreground")
+            return
+        }
+        val onLauncher = foreground == openPkg || foreground == closePkg || foreground == FLIPX_PKG
+        Log.i(TAG, "foreground=$foreground onLauncher=$onLauncher (open=$openPkg close=$closePkg)")
+        if (onLauncher) {
+            goHome()
+        }
+    }
+
+    private fun currentForegroundPackage(): String? = try {
+        // Run dumpsys directly (no shell pipe — the shell context inside the Shizuku
+        // UserService doesn't always honor pipes reliably). Grep with Kotlin regex instead.
+        val proc = ProcessBuilder("/system/bin/dumpsys", "window")
+            .redirectErrorStream(true).start()
+        val out = proc.inputStream.bufferedReader().readText()
+        proc.waitFor()
+        // Sample: mCurrentFocus=Window{e9c40e4 u0 com.launcher.hype/com.launcher.hype.MainActivity}
+        val match = Regex("""(?:mCurrentFocus|mFocusedApp)=\S+\{[^}]*\bu\d+\s+(\S+?)/""")
+            .find(out)
+        if (match == null) Log.w(TAG, "foreground regex didn't match; dumpsys output begins: ${out.take(200)}")
+        match?.groupValues?.get(1)
+    } catch (e: Exception) {
+        Log.w(TAG, "currentForegroundPackage failed: ${e.message}")
+        null
+    }
+
+    private fun goHome() {
+        try {
+            ProcessBuilder(
+                "/system/bin/am", "start",
+                "-a", "android.intent.action.MAIN",
+                "-c", "android.intent.category.HOME"
+            ).redirectErrorStream(true).start()
+        } catch (e: Exception) {
+            Log.w(TAG, "goHome failed: ${e.message}")
+        }
     }
 
     private fun writeState(open: Boolean) {
         try {
             val action = if (open) ACTION_OPEN else ACTION_CLOSE
             val proc = ProcessBuilder(
-                "/system/bin/am", "startservice",
-                "-n", "com.flipx.hinge/.StateUpdateService",
+                "/system/bin/am", "broadcast",
+                "--include-stopped-packages",
+                "-n", "com.flipx.hinge/.HingeReceiver",
                 "-a", action
             ).redirectErrorStream(true).start()
             proc.waitFor()
             if (proc.exitValue() != 0) {
                 val out = proc.inputStream.bufferedReader().readText().trim()
-                Log.w(TAG, "am startservice exit=${proc.exitValue()} out=$out")
+                Log.w(TAG, "am broadcast (state) exit=${proc.exitValue()} out=$out")
             }
         } catch (e: Exception) {
             Log.w(TAG, "writeState failed: ${e.message}")
@@ -135,16 +195,18 @@ class HingeUserService : IUserService.Stub {
     }
 
     private fun broadcast(action: String) {
+        // Implicit broadcast for external listeners (MacroDroid, etc.)
         try {
             ProcessBuilder("/system/bin/am", "broadcast", "-a", action)
                 .redirectErrorStream(true).start()
         } catch (e: Exception) {
-            Log.w(TAG, "broadcast failed: ${e.message}")
+            Log.w(TAG, "external broadcast failed: ${e.message}")
         }
     }
 
     companion object {
         private const val TAG = "FlipxHinge"
+        private const val FLIPX_PKG = "com.flipx.hinge"
 
         private const val EVENT_DEVICE = "/dev/input/event2"
         private const val EV_KEY = 0x01

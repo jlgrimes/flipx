@@ -53,12 +53,18 @@
             </intent-filter>
         </receiver>
 
-        <!-- Cross-process hinge state. UserService (shell uid) calls
-             `am startservice -n com.flipx.hinge/.StateUpdateService -a flipx.HINGE_(OPEN|CLOSE)`
-             which routes here, into flipx's main process, where we can update SharedPreferences. -->
-        <service
-            android:name=".StateUpdateService"
-            android:exported="true" />
+        <!-- Cross-process hinge state. UserService (shell uid) fires an explicit broadcast
+             via `am broadcast -n com.flipx.hinge/.HingeReceiver -a flipx.HINGE_(OPEN|CLOSE)`
+             with the include-stopped-packages flag. Broadcasts to manifest receivers are
+             exempt from the Android 12 background-service-start restriction. -->
+        <receiver
+            android:name=".HingeReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="flipx.HINGE_OPEN" />
+                <action android:name="flipx.HINGE_CLOSE" />
+            </intent-filter>
+        </receiver>
 
         <!-- Shizuku provider -->
         <provider

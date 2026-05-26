@@ -147,6 +147,7 @@ class MainActivity : AppCompatActivity(), ShizukuBridge.Listener {
                 val pkg = if (which == 0) "" else installed[which - 1].pkg
                 if (forOpen) Prefs.setOpenLauncher(this, pkg)
                 else Prefs.setCloseLauncher(this, pkg)
+                ShizukuBridge.pushLaunchers(this)
                 render()
             }
             .setNegativeButton(android.R.string.cancel, null)
