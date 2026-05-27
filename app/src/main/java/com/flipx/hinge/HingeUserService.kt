@@ -83,10 +83,14 @@ class HingeUserService : IUserService.Stub {
         val target = componentName.orEmpty()
         if (target.isEmpty()) return false
         return try {
+            // Reorder-to-front + single-top: if the target's task already exists, bring
+            // it forward without restarting the activity. Prevents the "ES-DE reloads
+            // every flip" symptom when both launchers are warm in memory.
             val proc = ProcessBuilder(
                 "/system/bin/am", "start",
                 "-a", "android.intent.action.MAIN",
-                "-c", "android.intent.category.LAUNCHER",
+                "--activity-reorder-to-front",
+                "--activity-single-top",
                 "-n", target
             ).redirectErrorStream(true).start()
             proc.waitFor()
@@ -117,14 +121,11 @@ class HingeUserService : IUserService.Stub {
     }
 
     private fun applyRotation(isOpen: Boolean) {
-        if (isOpen) {
-            // Open hinge: don't force anything — let the routed app (e.g. ES-DE) keep
-            // its original behavior. Sensor / app preference takes over.
-            runWm("user-rotation", "free")
-        } else {
-            // Closed hinge: lock to landscape so the everyday launcher displays predictably.
-            runWm("user-rotation", "lock", ROTATION_LANDSCAPE.toString())
-        }
+        // Close: landscape. Open: 90° CCW of close (matches the device's physical
+        // pivoted orientation when the hinge is open). Both directions are locked so
+        // routed apps don't auto-rotate while the toggle is on.
+        val rotation = if (isOpen) ROTATION_OPEN else ROTATION_CLOSE
+        runWm("user-rotation", "lock", rotation.toString())
     }
 
     private fun runWm(vararg args: String) {
@@ -278,9 +279,11 @@ class HingeUserService : IUserService.Stub {
         private const val KEY_F12 = 0x58
         private const val KEY_F9  = 0x43
 
-        // Hard-coded for the Anbernic RG Rotate. If landscape comes out wrong on your
-        // device, change this value (try 0, 2, or 3).
-        private const val ROTATION_LANDSCAPE = 1
+        // Hard-coded for the Anbernic RG Rotate.
+        // Close: hinge folded, device in landscape grip.
+        // Open: hinge pivoted, device rotated 90° CCW from close.
+        private const val ROTATION_CLOSE = 1
+        private const val ROTATION_OPEN = 0
 
         const val ACTION_OPEN = "flipx.HINGE_OPEN"
         const val ACTION_CLOSE = "flipx.HINGE_CLOSE"

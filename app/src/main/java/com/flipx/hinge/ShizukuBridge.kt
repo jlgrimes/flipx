@@ -14,7 +14,7 @@ object ShizukuBridge {
 
     // Bump on every UserService code change — Shizuku restarts the daemon when the
     // version increments (otherwise it keeps the old loaded class running).
-    private const val SERVICE_VERSION = 13
+    private const val SERVICE_VERSION = 18
 
     @Volatile var service: IUserService? = null
         private set

@@ -28,6 +28,6 @@
     <string name="home_role_note">Tip: if ES-DE has a \"launcher mode\" QS tile, turn it OFF — flipx should be the only app holding the HOME role.</string>
 
     <string name="rotation_header">Rotation</string>
-    <string name="rotation_label">Lock landscape on hinge close</string>
-    <string name="rotation_note">When on: closing the hinge forces the display to landscape; opening the hinge restores free rotation so the routed app (e.g. ES-DE) keeps its original behavior. When off, flipx never touches rotation.</string>
+    <string name="rotation_label">Lock orientation to hinge state</string>
+    <string name="rotation_note">When on: closing the hinge locks landscape; opening the hinge locks 90° counter-clockwise of that. Both directions stay locked so routed apps don\'t auto-rotate. When off, flipx never touches rotation.</string>
 </resources>

@@ -40,13 +40,13 @@ class HomeRouterActivity : Activity() {
     }
 
     private fun launchTarget(pkg: String): Boolean {
+        // Prefer the LAUNCHER intent — getLaunchIntentForPackage returns the activity's
+        // standard launcher entry (e.g. ES-DE's MainActivity, not MainActivityHomeApp).
+        // The HOME variant gives proper home-stack placement BUT reloads on every
+        // re-launch due to its launchMode, which makes flipping unbearable. The LAUNCHER
+        // entry stays warm in its task across flips.
         val launchIntent = packageManager.getLaunchIntentForPackage(pkg)
         val component = launchIntent?.component
-
-        // Prefer launching via the Shizuku UserService (shell uid). HomeRouterActivity is
-        // the system HOME app and gets a 648x720 wrapper window on this device — any
-        // activity we startActivity() from here inherits those bounds. Launching via
-        // `am start` from shell uid bypasses that inheritance.
         if (component != null) {
             val svc = ShizukuBridge.service
             if (svc != null) {
@@ -59,7 +59,6 @@ class HomeRouterActivity : Activity() {
                 }
                 Log.w(TAG, "Shizuku launch failed for $componentStr; falling back to startActivity")
             }
-            // Fallback: direct startActivity (may inherit wrapper bounds, but better than nothing)
             return runCatching {
                 startActivity(launchIntent.addFlags(
                     Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION
@@ -67,7 +66,7 @@ class HomeRouterActivity : Activity() {
             }.isSuccess
         }
 
-        // Last resort: HOME-category intent for launchers without a LAUNCHER activity
+        // Fallback: HOME-category intent for launchers without a LAUNCHER entry.
         val homeIntent = Intent(Intent.ACTION_MAIN)
             .addCategory(Intent.CATEGORY_HOME)
             .setPackage(pkg)
