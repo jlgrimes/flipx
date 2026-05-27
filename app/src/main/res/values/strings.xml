@@ -28,9 +28,6 @@
     <string name="home_role_note">Tip: if ES-DE has a \"launcher mode\" QS tile, turn it OFF — flipx should be the only app holding the HOME role.</string>
 
     <string name="rotation_header">Rotation</string>
-    <string name="rotation_label">Lock orientation to hinge state</string>
-    <string name="rotation_note">When on, flipx forces the display rotation to match the hinge: open → portrait, closed → landscape. Disables sensor-based auto-rotate while enabled. Hard-coded for the RG Rotate\'s physical orientations.</string>
-
-    <string name="fullscreen_label">RG Rotate fullscreen fix</string>
-    <string name="fullscreen_note">RG Rotate-specific. The 720×720 panel reserves ~36px on each side for system bars, pillarboxing every launcher to 648×720. Toggling this on applies system-wide immersive overrides so launchers fill the full panel. Hard-coded workaround.</string>
+    <string name="rotation_label">Lock landscape on hinge close</string>
+    <string name="rotation_note">When on: closing the hinge forces the display to landscape; opening the hinge restores free rotation so the routed app (e.g. ES-DE) keeps its original behavior. When off, flipx never touches rotation.</string>
 </resources>

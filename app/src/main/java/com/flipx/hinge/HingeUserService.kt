@@ -79,29 +79,6 @@ class HingeUserService : IUserService.Stub {
         Log.i(TAG, "launchers configured: open='$openLauncherPkg' close='$closeLauncherPkg'")
     }
 
-    override fun setForceFullscreen(enabled: Boolean) {
-        Log.i(TAG, "forceFullscreen := $enabled")
-        // Lever 1: tell WindowManager to ignore per-app orientation requests.
-        runWm("set-ignore-orientation-request", if (enabled) "true" else "false")
-        // Lever 2: legacy policy_control immersive override.
-        val policy = if (enabled) "immersive.full=*" else "null"
-        runSettings("put", "global", "policy_control", policy)
-    }
-
-    private fun runSettings(vararg args: String) {
-        try {
-            val proc = ProcessBuilder("/system/bin/settings", *args)
-                .redirectErrorStream(true).start()
-            proc.waitFor()
-            if (proc.exitValue() != 0) {
-                val out = proc.inputStream.bufferedReader().readText().trim()
-                Log.w(TAG, "settings ${args.joinToString(" ")} exit=${proc.exitValue()} out=$out")
-            }
-        } catch (e: Exception) {
-            Log.w(TAG, "settings failed: ${e.message}")
-        }
-    }
-
     override fun launchComponent(componentName: String?): Boolean {
         val target = componentName.orEmpty()
         if (target.isEmpty()) return false
@@ -140,8 +117,14 @@ class HingeUserService : IUserService.Stub {
     }
 
     private fun applyRotation(isOpen: Boolean) {
-        val rotation = if (isOpen) ROTATION_PORTRAIT else ROTATION_LANDSCAPE
-        runWm("user-rotation", "lock", rotation.toString())
+        if (isOpen) {
+            // Open hinge: don't force anything — let the routed app (e.g. ES-DE) keep
+            // its original behavior. Sensor / app preference takes over.
+            runWm("user-rotation", "free")
+        } else {
+            // Closed hinge: lock to landscape so the everyday launcher displays predictably.
+            runWm("user-rotation", "lock", ROTATION_LANDSCAPE.toString())
+        }
     }
 
     private fun runWm(vararg args: String) {
@@ -295,9 +278,8 @@ class HingeUserService : IUserService.Stub {
         private const val KEY_F12 = 0x58
         private const val KEY_F9  = 0x43
 
-        // Hard-coded for the Anbernic RG Rotate. If portrait/landscape come out backwards
-        // on your device, swap these two values.
-        private const val ROTATION_PORTRAIT = 0
+        // Hard-coded for the Anbernic RG Rotate. If landscape comes out wrong on your
+        // device, change this value (try 0, 2, or 3).
         private const val ROTATION_LANDSCAPE = 1
 
         const val ACTION_OPEN = "flipx.HINGE_OPEN"

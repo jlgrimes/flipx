@@ -42,24 +42,6 @@ class MainActivity : AppCompatActivity(), ShizukuBridge.Listener {
             Prefs.setOrientationLock(this, isChecked)
             applyOrientationLock(isChecked)
         }
-
-        binding.swForceFullscreen.isChecked = Prefs.forceFullscreen(this)
-        binding.swForceFullscreen.setOnCheckedChangeListener { _, isChecked ->
-            Prefs.setForceFullscreen(this, isChecked)
-            applyForceFullscreen(isChecked)
-        }
-    }
-
-    private fun applyForceFullscreen(enabled: Boolean) {
-        val svc = ShizukuBridge.service ?: return
-        Thread {
-            runCatching { svc.setForceFullscreen(enabled) }
-                .onFailure { e ->
-                    runOnUiThread {
-                        Toast.makeText(this, "fullscreen toggle failed: ${e.message}", Toast.LENGTH_SHORT).show()
-                    }
-                }
-        }.start()
     }
 
     private fun applyOrientationLock(enabled: Boolean) {

@@ -11,8 +11,8 @@ android {
         applicationId = "com.flipx.hinge"
         minSdk = 24
         targetSdk = 34
-        versionCode = 5
-        versionName = "0.5"  // RG Rotate fullscreen fix toggle
+        versionCode = 6
+        versionName = "0.6"
     }
 
     buildFeatures {

@@ -55,11 +55,11 @@ Open flipx. You'll see a status panel with several sequential gates — work thr
 
 That's it. Press home or flip the hinge — flipx routes you to the right launcher based on hinge state.
 
-### 5. (Optional) Lock orientation to hinge state
+### 5. (Optional) Lock landscape on hinge close
 
-The RG Rotate's physical configuration is different in each hinge position. flipx exposes a toggle that hard-binds display rotation to the hinge: **open → portrait, closed → landscape**. When enabled, auto-rotate is effectively disabled and the screen always sits in whichever orientation the hinge says it should.
+The RG Rotate's everyday-mode hinge position is landscape. flipx exposes a toggle that hard-locks display rotation to landscape when the hinge closes, and restores free (sensor-controlled) rotation when it opens — so apps you route to on open (e.g. ES-DE) behave normally.
 
-Toggle it in the **Rotation** section of flipx's main screen. Default off — turn on if you want this behavior.
+Toggle it in the **Rotation** section of flipx's main screen. Default off.
 
 ### 6. (Important) Turn off other "launcher mode" toggles
 
