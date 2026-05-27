@@ -14,7 +14,7 @@ object ShizukuBridge {
 
     // Bump on every UserService code change — Shizuku restarts the daemon when the
     // version increments (otherwise it keeps the old loaded class running).
-    private const val SERVICE_VERSION = 10
+    private const val SERVICE_VERSION = 12
 
     @Volatile var service: IUserService? = null
         private set
@@ -52,6 +52,9 @@ object ShizukuBridge {
                     runCatching {
                         svc.setOrientationLock(Prefs.orientationLock(ctx))
                     }.onFailure { Log.w(TAG, "setOrientationLock err: ${it.message}") }
+                    runCatching {
+                        svc.setForceFullscreen(Prefs.forceFullscreen(ctx))
+                    }.onFailure { Log.w(TAG, "setForceFullscreen err: ${it.message}") }
                 }
                 listener?.onConnected()
             } else {

@@ -79,6 +79,54 @@ class HingeUserService : IUserService.Stub {
         Log.i(TAG, "launchers configured: open='$openLauncherPkg' close='$closeLauncherPkg'")
     }
 
+    override fun setForceFullscreen(enabled: Boolean) {
+        Log.i(TAG, "forceFullscreen := $enabled")
+        // Lever 1: tell WindowManager to ignore per-app orientation requests.
+        runWm("set-ignore-orientation-request", if (enabled) "true" else "false")
+        // Lever 2: legacy policy_control immersive override.
+        val policy = if (enabled) "immersive.full=*" else "null"
+        runSettings("put", "global", "policy_control", policy)
+    }
+
+    private fun runSettings(vararg args: String) {
+        try {
+            val proc = ProcessBuilder("/system/bin/settings", *args)
+                .redirectErrorStream(true).start()
+            proc.waitFor()
+            if (proc.exitValue() != 0) {
+                val out = proc.inputStream.bufferedReader().readText().trim()
+                Log.w(TAG, "settings ${args.joinToString(" ")} exit=${proc.exitValue()} out=$out")
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "settings failed: ${e.message}")
+        }
+    }
+
+    override fun launchComponent(componentName: String?): Boolean {
+        val target = componentName.orEmpty()
+        if (target.isEmpty()) return false
+        return try {
+            val proc = ProcessBuilder(
+                "/system/bin/am", "start",
+                "-a", "android.intent.action.MAIN",
+                "-c", "android.intent.category.LAUNCHER",
+                "-n", target
+            ).redirectErrorStream(true).start()
+            proc.waitFor()
+            val ok = proc.exitValue() == 0
+            if (!ok) {
+                val out = proc.inputStream.bufferedReader().readText().trim()
+                Log.w(TAG, "am start -n $target exit=${proc.exitValue()} out=$out")
+            } else {
+                Log.i(TAG, "launched $target")
+            }
+            ok
+        } catch (e: Exception) {
+            Log.w(TAG, "launchComponent failed: ${e.message}")
+            false
+        }
+    }
+
     override fun setOrientationLock(enabled: Boolean) {
         orientationLockEnabled = enabled
         Log.i(TAG, "orientation lock := $enabled")

@@ -16,4 +16,19 @@ interface IUserService {
      * Disabling calls `wm user-rotation free`, restoring sensor-based rotation.
      */
     void setOrientationLock(boolean enabled) = 8;
+
+    /**
+     * Launch a component via `am start -n <component>` running as shell uid.
+     * Bypasses HomeRouterActivity's home-stack window context — the launched
+     * activity gets the full display, not the 648x720 inherited wrapper bounds.
+     */
+    boolean launchComponent(String componentName) = 9;
+
+    /**
+     * RG Rotate fullscreen workaround. The 720x720 square panel reserves ~36px on each
+     * side for system bars even when apps don't draw them, pillarboxing all apps to
+     * 648x720. Toggling this on applies both immersive overrides we can reach from
+     * shell: ignore-orientation-request and policy_control immersive.full=*.
+     */
+    void setForceFullscreen(boolean enabled) = 10;
 }

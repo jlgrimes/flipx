@@ -8,6 +8,7 @@ object Prefs {
     private const val KEY_CLOSE = "close_launcher_pkg"
     private const val KEY_HINGE_OPEN = "hinge_is_open"
     private const val KEY_ORIENTATION_LOCK = "orientation_lock"
+    private const val KEY_FORCE_FULLSCREEN = "force_fullscreen"
 
     private fun prefs(ctx: Context) =
         ctx.applicationContext.getSharedPreferences(NAME, Context.MODE_PRIVATE)
@@ -40,5 +41,13 @@ object Prefs {
 
     fun setOrientationLock(ctx: Context, enabled: Boolean) {
         prefs(ctx).edit().putBoolean(KEY_ORIENTATION_LOCK, enabled).apply()
+    }
+
+    /** RG Rotate fullscreen workaround. Default false. */
+    fun forceFullscreen(ctx: Context): Boolean =
+        prefs(ctx).getBoolean(KEY_FORCE_FULLSCREEN, false)
+
+    fun setForceFullscreen(ctx: Context, enabled: Boolean) {
+        prefs(ctx).edit().putBoolean(KEY_FORCE_FULLSCREEN, enabled).apply()
     }
 }

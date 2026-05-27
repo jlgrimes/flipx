@@ -40,17 +40,34 @@ class HomeRouterActivity : Activity() {
     }
 
     private fun launchTarget(pkg: String): Boolean {
-        // Prefer the regular LAUNCHER intent. Using a HOME-category intent puts the target
-        // in the home task stack, which on Android 12 (at least this Unisoc build) applies
-        // an aspect-ratio compat constraint and pillarboxes the activity. The LAUNCHER
-        // intent starts the target in a normal task with no compat constraint.
         val launchIntent = packageManager.getLaunchIntentForPackage(pkg)
-            ?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION)
-        if (launchIntent != null) {
-            return runCatching { startActivity(launchIntent) }.isSuccess
+        val component = launchIntent?.component
+
+        // Prefer launching via the Shizuku UserService (shell uid). HomeRouterActivity is
+        // the system HOME app and gets a 648x720 wrapper window on this device — any
+        // activity we startActivity() from here inherits those bounds. Launching via
+        // `am start` from shell uid bypasses that inheritance.
+        if (component != null) {
+            val svc = ShizukuBridge.service
+            if (svc != null) {
+                val componentStr = component.flattenToString()
+                val launched = runCatching { svc.launchComponent(componentStr) }
+                    .getOrDefault(false)
+                if (launched) {
+                    Log.i(TAG, "launched via Shizuku: $componentStr")
+                    return true
+                }
+                Log.w(TAG, "Shizuku launch failed for $componentStr; falling back to startActivity")
+            }
+            // Fallback: direct startActivity (may inherit wrapper bounds, but better than nothing)
+            return runCatching {
+                startActivity(launchIntent.addFlags(
+                    Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION
+                ))
+            }.isSuccess
         }
-        // Fallback: HOME-category intent, for launchers that only declare a HOME activity
-        // and no plain LAUNCHER activity.
+
+        // Last resort: HOME-category intent for launchers without a LAUNCHER activity
         val homeIntent = Intent(Intent.ACTION_MAIN)
             .addCategory(Intent.CATEGORY_HOME)
             .setPackage(pkg)

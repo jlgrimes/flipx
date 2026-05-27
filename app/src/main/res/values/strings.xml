@@ -30,4 +30,7 @@
     <string name="rotation_header">Rotation</string>
     <string name="rotation_label">Lock orientation to hinge state</string>
     <string name="rotation_note">When on, flipx forces the display rotation to match the hinge: open → portrait, closed → landscape. Disables sensor-based auto-rotate while enabled. Hard-coded for the RG Rotate\'s physical orientations.</string>
+
+    <string name="fullscreen_label">RG Rotate fullscreen fix</string>
+    <string name="fullscreen_note">RG Rotate-specific. The 720×720 panel reserves ~36px on each side for system bars, pillarboxing every launcher to 648×720. Toggling this on applies system-wide immersive overrides so launchers fill the full panel. Hard-coded workaround.</string>
 </resources>
